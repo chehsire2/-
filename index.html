@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>小青勇闯你财 · 早八求生</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+  <canvas id="game" width="480" height="720"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-left">
+        <div id="hearts" class="hearts"></div>
+        <div class="clock-wrap">
+          <span class="clock-label">到校</span>
+          <span id="clock" class="clock">7:00</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div id="score" class="score">0</div>
+        <div id="combo" class="combo"></div>
+      </div>
+    </div>
+
+    <div class="hud-foot">
+      <div id="lyric" class="lyric"></div>
+
+      <div class="hud-bottom">
+        <div class="stage-row">
+          <span id="stageName" class="stage-name">环湖宿舍楼</span>
+          <span id="stageDist" class="stage-dist">0 / 320 m</span>
+        </div>
+        <div class="bar"><i id="barFill"></i></div>
+      </div>
+
+      <div class="skill-row">
+        <div id="dashChip" class="chip chip-dash">冲刺 <b>空格</b></div>
+        <div id="bellChip" class="chip chip-bell">铃声 <b>J</b></div>
+        <div id="buffRow" class="buff-row"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 阶段横幅 ===================== -->
+  <div id="banner" class="banner hidden">
+    <div class="banner-inner">
+      <div class="banner-kicker">第 <b id="bannerIdx">1</b> 站</div>
+      <div class="banner-title" id="bannerTitle">环湖宿舍楼</div>
+      <div class="banner-sub" id="bannerSub"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- ===================== 主菜单 ===================== -->
+  <div id="menu" class="screen">
+    <div class="panel menu-panel">
+      <div class="logo">
+        <div class="logo-bike">🛵</div>
+        <h1>小青勇闯你财</h1>
+        <p class="tagline">— 早八求生 · 南湖校区通勤实录 —</p>
+      </div>
+
+      <p class="story">
+        早上 7:00，闹钟第三次响起。<br>
+        你翻身上了一辆小青，从<b>环湖宿舍楼</b>出发，<br>
+        穿过<b>中原楼</b>、<b>新体育场</b>、<b>艺体中心</b>，<br>
+        挤过两道<b>只容一车通过的闸口</b>，<br>
+        翻上<b>晓南湖拱桥</b>——桥那头是视野盲区，<br>
+        最后冲进<b>文澜楼</b>，8:00 上课铃响之前坐下。
+      </p>
+
+      <button id="btnStart" class="btn btn-primary">开始骑行</button>
+
+      <div class="ctrl-grid">
+        <div><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd><span>左右变道</span></div>
+        <div><kbd>空格</kbd><span>冲刺（短暂无敌）</span></div>
+        <div><kbd>J</kbd><span>按铃（路人让路）</span></div>
+        <div><kbd>P</kbd> / <kbd>Esc</kbd><span>暂停</span></div>
+        <div><kbd>M</kbd><span>音乐开关</span></div>
+      </div>
+
+      <div class="legend">
+        <span><i style="background:#ffd166"></i>冰美式 · 提速</span>
+        <span><i style="background:#58a6ff"></i>遮阳伞 · 护盾</span>
+        <span><i style="background:#7ee787"></i>学霸笔记 · 加分</span>
+        <span><i style="background:#ffb84d"></i>热干面 · 回血</span>
+      </div>
+
+      <div class="bgm-row">
+        <button id="btnMusic" class="btn btn-ghost btn-sm">♪ 音乐：开</button>
+        <button id="btnLoadBgm" class="btn btn-ghost btn-sm">载入原曲音频</button>
+        <input id="fileBgm" type="file" accept="audio/*" hidden>
+      </div>
+
+      <div class="mel-row">
+        <span class="mel-label">旋律来源</span>
+        <button id="btnMelOrig" class="btn btn-ghost btn-sm">8-bit 原创改编</button>
+        <button id="btnMelTran" class="btn btn-ghost btn-sm">原曲扒谱版</button>
+      </div>
+      <p class="fineprint" id="melNote"></p>
+
+      <p class="fineprint" id="bgmNote">
+        <b>扒谱版</b>是真的从原曲录音里扒出来的旋律：Demucs 人声分离 → HPSS 谐波增强 →
+        谱白化谐波求和 → Viterbi 连续性追踪 → 按 Bb 大调吸附 → 两遍合并量化。<br>
+        主歌重复两遍的交叉验证一致率 <b>74.5%</b>，反推单遍准确率约 <b>85%</b>，
+        稳定长音音准误差仅 <b>5 音分</b>，调内音占 91.7%。<br>
+        <b>但它仍是自动转录，约 15~25% 的音可能差半个音</b>，而且没跟歌词逐字对齐
+        （网上那份 LRC 在副歌段落偏了 5 秒多，靠它切句会切错）。<br>
+        <b>原创改编版</b>是我自己写的旋律（本来就标明不是原曲），节奏规整、逐句对齐。<br>
+        想直接听真原曲：点「载入原曲音频」，选你本地的文件即可。
+      </p>
+
+      <details class="jp-box">
+        <summary>填入真·简谱（把旋律换成原曲）</summary>
+        <p class="fineprint">
+          按顺序<b>一行一句</b>，共 18 句。每个记号 = 一个八分音符：<br>
+          <b>1-7</b> 唱名 · <b>-</b> 延音 · <b>0</b> 休止 · <b>5,</b> 低八度 · <b>1'</b> 高八度<br>
+          每行的音数必须等于该句歌词的字数，字数对不上的那行会被跳过并报出来。
+        </p>
+        <div id="jpRef" class="jp-ref"></div>
+        <textarea id="jpInput" class="jp-input" spellcheck="false" rows="6"></textarea>
+        <div class="bgm-row">
+          <button id="btnJpApply" class="btn btn-ghost btn-sm">应用并试听</button>
+          <button id="btnJpReset" class="btn btn-ghost btn-sm">恢复默认改编</button>
+        </div>
+        <p id="jpStatus" class="fineprint"></p>
+      </details>
+    </div>
+  </div>
+
+  <!-- ===================== 暂停 ===================== -->
+  <div id="pause" class="screen hidden">
+    <div class="panel">
+      <h2>暂停中</h2>
+      <p class="muted">喝口水，早八还来得及。</p>
+      <button id="btnResume" class="btn btn-primary">继续</button>
+      <button id="btnQuit" class="btn btn-ghost">放弃这趟车</button>
+    </div>
+  </div>
+
+  <!-- ===================== 结算 ===================== -->
+  <div id="result" class="screen hidden">
+    <div class="panel">
+      <div id="resBadge" class="res-badge">S</div>
+      <h2 id="resTitle">到啦！</h2>
+      <p id="resSub" class="muted"></p>
+      <div class="stat-list" id="resStats"></div>
+      <button id="btnRetry" class="btn btn-primary">再来一趟</button>
+      <button id="btnMenu" class="btn btn-ghost">回到校门口</button>
+    </div>
+  </div>
+
+  <!-- ===================== 触屏操作 ===================== -->
+  <div id="touch" class="touch hidden">
+    <div class="touch-left">
+      <button class="tbtn" data-key="left">◀</button>
+      <button class="tbtn" data-key="right">▶</button>
+    </div>
+    <div class="touch-right">
+      <button class="tbtn tbtn-bell" data-key="bell">铃</button>
+      <button class="tbtn tbtn-dash" data-key="dash">冲</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/song.js"></script>
+<script src="js/meltrack.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/art.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
